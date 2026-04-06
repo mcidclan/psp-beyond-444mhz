@@ -12,7 +12,7 @@ As the program could crash at any time after reaching a certain limit, you'll ne
 
 Note: Keep in mind that it still needs improvement to get a more precise value.
 
-## Disclamer
+## Disclaimer
 
 This project and code are provided as-is without warranty. Users assume full responsibility for any implementation or consequences. Use at your own discretion and risk
 

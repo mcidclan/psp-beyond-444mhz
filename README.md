@@ -1,4 +1,4 @@
-# Experimental Overclock up to 444MHz
+# Experimental Overclock targeting 555MHz
 
 ## Description
 This is an experimental project for technical purposes only, intended for developers and advanced users. Stability is not guaranteed, use with caution.
@@ -11,17 +11,17 @@ Before using this plugin, make sure to:
 - Remove any existing overclocking >333MHz code from your application
 
 ### Controls
-Press **L_TRIGGER + R_TRIGGER + NOTE** (or alternatively **L_TRIGGER + R_TRIGGER + CIRCLE**) to toggle between 333MHz and 444MHz, or the frequency set in the ms0:/overconfig.txt file.
+Press **L_TRIGGER + R_TRIGGER + NOTE** (or alternatively **L_TRIGGER + R_TRIGGER + CIRCLE**) to toggle between 333MHz and 555MHz, or the frequency set in the ms0:/overconfig.txt file.
 
 ### Visual Feedback
 - **333MHz (standard)**: White square on green background
-- **444MHz - custom (overclocked)**: Red square on white background
+- **Custom > 333MHz (overclocked)**: Red square on white background
 The plugin auto-starts at 333MHz. In most cases, you should see the square a few seconds after the game/homebrew boots.
 
 ### ms0:/overconfig.txt
-If the file doesn't exist, the plugin will target 444MHz for the overclock frequency. The value in the file must be between 333 and 444, which could be stable on some 2k and 3k models, but not all of them.  
+If the file doesn't exist, the plugin will target 555MHz for the overclock frequency. So you must set a value between 333 and 555 in that file.  
 
-You can create that file manually, or use the overclock stress tester provided with this project, and let it create the file at the root of the memory stick for you with the maximum frequency supported by your PSP. Keep in mind that it still needs improvement to get a more precise value.
+You can create that file manually, or use the overclock stress tester provided with this project, and let it create the file at the root of the memory stick for you with the maximum frequency supported by your PSP.
 
 ## Compatibility and Testing
 
@@ -31,26 +31,21 @@ After experiencing instability during testing, it is preferable to remove the ba
 ### Overclock Stress Tester
 See the `tester` folder of this repository for more information.
 
-### PSP 2000 and 3000
-Tested on PSP 2000 and 3000. Reaching 444MHz, which appears to be the limit before instabilities occur. Other tests on different 2000 and 3000 units show a limit between 407 and 416MHz. In any case, you will have to figure out your ideal frequency by starting at 444MHz and testing homebrew and games. If you encounter instabilities, decrease the frequency in steps of 12MHz (for example).
-
-### PSP 1000
-Unfortunately on 1000, the limit seems to already be reached at 370MHz on my side, from which instabilities start to manifest. But you'll have to find your own limit since people have reported reaching higher frequencies.
-
-### PSP Go
-Not tested.
-
-### PSP Street (E1000)
-Not supported yet.
+| Model | Status |
+|---|---|
+| PSP 2000 and 3000 | Tested |
+| PSP 1000 | Tested |
+| PSP Go | Not tested |
+| PSP Street (E1000) | Not supported yet |
 
 ## Build
 You can build the project using `./build.sh`. This will bundle all files into `./bin/build/` ready to be copied to the root of your Memory Stick.
 
 To track which version you've built, use `./build.sh <version>` (e.g., `./build.sh v2.4`). This generates a `note.txt` file from the template with the specified version number.
 
-The README.md files are automatically included in their respective directories so you have the instructions available locally.
+The README.md files will automatically be included in their respective directories so you have the instructions available locally.
 
-## Disclamer
+## Disclaimer
 This project and code are provided as-is without warranty. Users assume full responsibility for any implementation or consequences. Use at your own discretion and risk
 
 ## Special Mention

@@ -22,12 +22,13 @@ PSP_MAIN_THREAD_ATTR(PSP_THREAD_ATTR_VFPU | PSP_THREAD_ATTR_USER);
 // PLL_NUM = (int)(((float)(THEORETICAL_FREQUENCY * PLL_DEN)) / (PLL_BASE_FREQ * PLL_RATIO_VALUE))
 // PLL_FREQ = PLL_BASE_FREQ * (PLL_NUM / PLL_DEN) * PLL_RATIO, with PLL_BASE_FREQ = 37 and PLL_RATIO = 1.0f
 
-#define    DEFAULT_FREQUENCY         333
-static int THEORETICAL_FREQUENCY   = 466;
+#define DEFAULT_FREQUENCY           333
+#define OVERCLOCK_FREQUENCY_STEP    5
+static int THEORETICAL_FREQUENCY  = 555; //466;
 
 #define PLL_MUL_MSB           0x0124
 #define PLL_BASE_FREQ         37
-#define PLL_DEN               20
+#define PLL_DEN               /*20*/ 17
 #define PLL_RATIO_INDEX       5
 #define PLL_RATIO             1.0f
 //#define PLL_CUSTOM_FLAG       27
@@ -106,15 +107,15 @@ inline void adjustPLLRatio() {
   u32 index = hw(0xbc100068) & 0x0f;
   sync();
 
-  if (index != 5) {
+  if (index != PLL_RATIO_INDEX) {
     
     //const u32 defaultNum = (u32)(((float)(DEFAULT_FREQUENCY * PLL_DEN)) / ((float)(PLL_BASE_FREQ * PLL_RATIO)));
     //hw(0xbc1000fc) = (PLL_MUL_MSB << 16) | (defaultNum << 8) | PLL_DEN;
     //sync();
     
-    const int step = (index > 5) ? -1 : 1;
-    while (((step < 0) == (index > 5)) || index == 5) {
-    //while ((step < 0 && index >= 5) || (step > 0 && index <= 5)) {
+    const int step = (index > PLL_RATIO_INDEX) ? -1 : 1;
+    while (((step < 0) == (index > PLL_RATIO_INDEX)) || index == PLL_RATIO_INDEX) {
+    //while ((step < 0 && index >= PLL_RATIO_INDEX) || (step > 0 && index <= PLL_RATIO_INDEX)) {
         
       hw(0xbc100068) = 0x80 | index;
       sync();
@@ -192,7 +193,7 @@ int _setOverclock() {
   
   adjustInitialFrequencies();
   
-  const int freqStep = 5;
+  const int freqStep = OVERCLOCK_FREQUENCY_STEP;
   int defaultFreq = DEFAULT_FREQUENCY;
   int theoreticalFreq = defaultFreq + freqStep;
 
@@ -251,7 +252,7 @@ void _cancelOverclock() {
   const float n = (float)((pllMul & 0xff00) >> 8);
   const float d = (float)((pllMul & 0x00ff));
   const float m = (d > 0.0f) ? (n / d) : 9.0f;
-  const int overclocked = ((pllCtl & 5) && (m > 9.0f)) ? 1 : 0;
+  const int overclocked = ((pllCtl & PLL_RATIO_INDEX) && (m > 9.0f)) ? 1 : 0;
   sceKernelDelayThread(1000);
   
   //const u32 pllMul = hw(0xbc1000fc); sync();
