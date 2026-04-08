@@ -2,21 +2,20 @@
 #define H_OVERCLOCK_PLUGIN_MAIN
 
 #include "main.h"
-//#include <pspge.h>
 
 // m-c/d 2026, for more information on this project see:
 // https://github.com/mcidclan/psp-undocumented-sorcery/tree/main/experimental-overclock
 
-#define DEFAULT_FREQUENCY           333
-#define MAX_THEORETICAL_FREQUENCY   555 /*471*/ /*524*/
-#define OVERCLOCK_FREQUENCY_STEP    5  /*PLL_BASE_FREQ / 2*/
-static int THEORETICAL_FREQUENCY  = MAX_THEORETICAL_FREQUENCY;
+#define PLL_DEN                               20 /*17*/ /*18*/
+#define PLL_MUL_MSB                           0x0124
+#define PLL_RATIO_INDEX                       5
+#define PLL_BASE_FREQ                         37
+//#define PLL_CUSTOM_FLAG                     27
+#define DEFAULT_FREQUENCY                     333
+#define OVERCLOCK_FREQUENCY_STEP              5  /*PLL_BASE_FREQ / 2*/
 
-#define PLL_MUL_MSB               0x0124
-#define PLL_RATIO_INDEX           5
-#define PLL_BASE_FREQ             37
-#define PLL_DEN                   17 /*20*/ /*18*/
-//#define PLL_CUSTOM_FLAG           27
+static const int MAX_THEORETICAL_FREQUENCY  = ((int)((255.0f / (float)PLL_DEN) * (float)PLL_BASE_FREQ)); //555; //471; //524;
+static int THEORETICAL_FREQUENCY            = MAX_THEORETICAL_FREQUENCY;
 
 #define updatePLLMultiplier(num, msb)               \
 {                                                   \

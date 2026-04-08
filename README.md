@@ -3,7 +3,7 @@
 ## Description
 This is an experimental project for technical purposes only, intended for developers and advanced users. Stability is not guaranteed, use with caution.  
 
-The current target frequency is set to 555 MHz (defined by `THEORETICAL_FREQUENCY`), but this is not guaranteed to be achieved on all PSPs. Some will comfortably exceed 407 MHz, others will be around that mark, and some may fall below it.
+The current target frequency is set to 471 MHz (defined by `THEORETICAL_FREQUENCY`), but this is not guaranteed to be achieved on all PSPs. Some will comfortably exceed 407 MHz, others will be around that mark, and some may fall below it.
 
 ## Usage
 

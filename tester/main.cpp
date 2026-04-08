@@ -22,16 +22,16 @@ PSP_MAIN_THREAD_ATTR(PSP_THREAD_ATTR_VFPU | PSP_THREAD_ATTR_USER);
 // PLL_NUM = (int)(((float)(THEORETICAL_FREQUENCY * PLL_DEN)) / (PLL_BASE_FREQ * PLL_RATIO_VALUE))
 // PLL_FREQ = PLL_BASE_FREQ * (PLL_NUM / PLL_DEN) * PLL_RATIO, with PLL_BASE_FREQ = 37 and PLL_RATIO = 1.0f
 
-#define DEFAULT_FREQUENCY           333
-#define OVERCLOCK_FREQUENCY_STEP    5
-static int THEORETICAL_FREQUENCY  = 555; // 524; // 471;
+#define PLL_DEN                           20 /*17*/ /*18*/ 
+#define PLL_MUL_MSB                       0x0124
+#define PLL_BASE_FREQ                     37
+#define PLL_RATIO_INDEX                   5
+#define PLL_RATIO                         1.0f
+//#define PLL_CUSTOM_FLAG                 27
+#define DEFAULT_FREQUENCY                 333
+#define OVERCLOCK_FREQUENCY_STEP          5
 
-#define PLL_MUL_MSB           0x0124
-#define PLL_BASE_FREQ         37
-#define PLL_DEN               17 /*18*/ /*20*/
-#define PLL_RATIO_INDEX       5
-#define PLL_RATIO             1.0f
-//#define PLL_CUSTOM_FLAG       27
+static const int THEORETICAL_FREQUENCY  = ((int)((255.0f / (float)PLL_DEN) * (float)PLL_BASE_FREQ)); // 471; // 555; // 524;
 
 int switchOverclock = 0, stopped = 0;
 int currFreq = 0, targetFreq = DEFAULT_FREQUENCY;
