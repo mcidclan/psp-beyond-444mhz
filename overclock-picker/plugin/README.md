@@ -1,6 +1,6 @@
 ## Overclock Picker for Early Gen (1k, 2k, early 3k, go)
 
-This is a lighter version of the experimental overclock using a lookup system over an array of precise values for the PSP models prior to the Street, and for the last versions of the 3000 series.
+This is a lighter version of the experimental overclock using a lookup system over an array of precise values for the PSP models prior to the Street and the last versions of the 3000 series.
 
 Hold L + R to activate the picker, then use VOL+ or VOL- to increase or decrease the overclock value. An indicator in the top right corner shows how many steps you are targeting on the value table. To cancel the overclock, just decrease the value to 0.
 
