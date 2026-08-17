@@ -1,7 +1,7 @@
 BINOUT = ./bin/
 PATHSRC = ./
 PATHOBJS = $(BINOUT)
-TARGET = $(BINOUT)expover
+TARGET = $(BINOUT)opicker
 
 BUILD_PRX = 1
 
