@@ -79,8 +79,7 @@ float frequency = 0.0f;
   } while (hw(0xbc100068) & 0x80);                  \
   sync();                                           \
 }
-     
-/*     
+
 int switchOverclock = 0, stopped = 0;
 int currFreq = 0, targetFreq = DEFAULT_FREQUENCY;
 
@@ -109,6 +108,7 @@ static int writeFrequency(u32 freq) {
   return 0;
 }
 
+/*
 u32 ctrl = 0, mult = 0;
 int _dump() {
   
@@ -245,11 +245,42 @@ void guInit() {
   sceGuSync(0,0);
 }
 
+const int lastTableId = mulTableSize - 1;
+
+int autoMode = 0;
+int autoFirst = 1;
+
+int autoThread() {
+
+  SceCtrlData ctl;
+  while (1) {
+
+    sceCtrlPeekBufferPositive(&ctl, 1);
+    if (autoMode) {
+      
+      if ((overclockId < lastTableId)) {
+        
+        if(!autoFirst) {
+          
+          overclockId++;
+        }
+        setOverclock();
+        scePowerTick(PSP_POWER_TICK_ALL);
+        sceKernelDelayThread(1000000);
+        writeFrequency((u32)frequency);
+        sceKernelDelayThread(1000000);
+        autoFirst = 0;
+      }
+    }
+    
+    sceKernelDelayThread(10);
+  }
+}
+
 int thread() {
   
-  static int up = 1;
-  
-  const int lastTableId = mulTableSize - 1;
+  int up = 1;
+  int autoUp = 1;
   
   SceCtrlData ctl;
   initOverclock();
@@ -258,30 +289,43 @@ int thread() {
     
     sceCtrlPeekBufferPositive(&ctl, 1);
     
-    if ((ctl.Buttons & PSP_CTRL_TRIANGLE) && up) {
+    if ((ctl.Buttons & PSP_CTRL_CIRCLE) && autoUp) {
       
-      if (overclockId < lastTableId) {
-        overclockId += 1;
-        up = 0;
-      }
+      autoMode = (~autoMode) & 1;
+      autoUp = 0;
+    } else if(!(ctl.Buttons & PSP_CTRL_CIRCLE)) {
+      autoUp = 1;
     }
+    
 
-    if ((ctl.Buttons & PSP_CTRL_CROSS) && up) {
+    if(!autoMode) {
       
-      if (overclockId > 0) {
-        overclockId -= 1;
-        up = 0;
+      autoFirst = 1;
+      if ((ctl.Buttons & PSP_CTRL_TRIANGLE) && up) {
+        
+        if (overclockId < lastTableId) {
+          overclockId += 1;
+          up = 0;
+        }
+      }
+
+      if ((ctl.Buttons & PSP_CTRL_CROSS) && up) {
+        
+        if (overclockId > 0) {
+          overclockId -= 1;
+          up = 0;
+        }
+      }
+      
+      if (!up) {
+        setOverclock();
+      }
+
+      if (!(ctl.Buttons & PSP_CTRL_TRIANGLE) && !(ctl.Buttons & PSP_CTRL_CROSS)) {
+        up = 1;
       }
     }
     
-    if (!up) {
-      setOverclock();
-    }
-
-    if (!(ctl.Buttons & PSP_CTRL_TRIANGLE) && !(ctl.Buttons & PSP_CTRL_CROSS)) {
-      up = 1;
-    }
-        
     sceKernelDelayThread(10);
   }
 }
@@ -298,12 +342,23 @@ int main() {
   }
   
   guInit();
-  
-  int thid = sceKernelCreateThread("expover-thread",
-    (int (*)(unsigned int, void*))((void*)thread), 0x14, 0x8000, PSP_THREAD_ATTR_VFPU, NULL);
-  
-  if (thid >= 0) {
-    sceKernelStartThread(thid, 0, NULL);
+
+  {
+    int thid = sceKernelCreateThread("ocpicker-thread",
+      (int (*)(unsigned int, void*))((void*)thread), 0x14, 0x8000, PSP_THREAD_ATTR_VFPU, NULL);
+    
+    if (thid >= 0) {
+      sceKernelStartThread(thid, 0, NULL);
+    }
+  }
+
+  {
+    int thid = sceKernelCreateThread("ocpicker-thread-auto",
+      (int (*)(unsigned int, void*))((void*)autoThread), 0x15, 0x8000, PSP_THREAD_ATTR_VFPU, NULL);
+    
+    if (thid >= 0) {
+      sceKernelStartThread(thid, 0, NULL);
+    }
   }
   
   pspDebugScreenInitEx(0x0, PSP_DISPLAY_PIXEL_FORMAT_8888, 0);
@@ -330,15 +385,30 @@ int main() {
 
     pspDebugScreenSetOffset(offset);
     
-    pspDebugScreenSetXY(40, 0);
-    pspDebugScreenPrintf("Overclock Picker v1.0");
+    pspDebugScreenSetXY(42, 32);
+    pspDebugScreenPrintf("Overclock Picker Test v1.1");
     
     pspDebugScreenSetXY(0, 0);
     pspDebugScreenPrintf(" FPS: %llu               \n", fps);
-    pspDebugScreenPrintf(" freq: %.0f MHz            \n", frequency);
+    pspDebugScreenPrintf(" freq: %.0f MHz            ", frequency);
+    
+    //pspDebugScreenPrintf(" v: 0x%08x            \n", autoMode);
     //pspDebugScreenPrintf(" Ctrl: 0x%08x            \n", ctrl);
     //pspDebugScreenPrintf(" Mult: 0x%08x            \n", mult);
   
+    pspDebugScreenSetXY(0, 4);
+    if(!autoMode) {
+      
+      pspDebugScreenPrintf(" MANUAL mode:                                     \n");
+      pspDebugScreenPrintf(" - Press TRIANGLE or CROSS to change the frequency\n");
+      pspDebugScreenPrintf(" - Press CIRCLE to switch to AUTO mode            \n");
+    }
+    else {
+      pspDebugScreenPrintf(" AUTO mode:                                       \n");
+      pspDebugScreenPrintf("                                                  \n");
+      pspDebugScreenPrintf(" - Press CIRCLE to switch to MANUAL mode          \n");
+    }
+    
     {
       Vertex* const vertices = (Vertex*)sceGuGetMemory(sizeof(Vertex) * 2);
       move += dir;
