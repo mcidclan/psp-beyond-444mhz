@@ -154,10 +154,33 @@ static inline int setOverclock() {
   return 0;
 }
 
+/*
+static inline int readId() {
+  
+  char buf[16] = {0};
+  SceUID fd = sceIoOpen("ms0:/opicker.id", PSP_O_RDONLY, 0777);
+  if (fd >= 0) {
+    
+    sceIoRead(fd, buf, sizeof(buf) - 1);
+    sceIoClose(fd);
+  } else {
+    return -1;
+  }
+  
+  u32 result = 0;
+  for (int i = 0; buf[i] >= '0' && buf[i] <= '9'; i++) {
+    result = result * 10 + (buf[i] - '0');
+  }
+  return result;
+}
+*/
+
 static inline void initOverclock(int* const delay) {
   
   sceKernelIcacheInvalidateAll();
   unlockMemory();
+  
+  // readId();
   
   *delay = 1;
   scePowerSetClockFrequency(DEFAULT_FREQUENCY, DEFAULT_FREQUENCY, DEFAULT_FREQUENCY/2);

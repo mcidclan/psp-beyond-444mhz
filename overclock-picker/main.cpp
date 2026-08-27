@@ -83,15 +83,15 @@ float frequency = 0.0f;
 int switchOverclock = 0, stopped = 0;
 int currFreq = 0, targetFreq = DEFAULT_FREQUENCY;
 
-static int writeFrequency(u32 freq) {
+static int writeId(u32 id) {
   
   static char buf[16];
   
   int i = 0, j = 0;
   do {
-    buf[i++] = '0' + (freq % 10);
-    freq /= 10;
-  } while (freq > 0);
+    buf[i++] = '0' + (id % 10);
+    id /= 10;
+  } while (id > 0);
   
   while (j < i / 2) {
     char tmp = buf[j];
@@ -99,8 +99,9 @@ static int writeFrequency(u32 freq) {
     buf[i - 1 - j++] = tmp;
   }
   
-  SceUID fd = sceIoOpen("ms0:/overconfig.txt", PSP_O_RDWR | PSP_O_CREAT | PSP_O_TRUNC, 0777);
+  SceUID fd = sceIoOpen("ms0:/opicker.id", PSP_O_RDWR | PSP_O_CREAT | PSP_O_TRUNC, 0777);
   if (fd >= 0) {
+    
     buf[i++] = '\n';
     sceIoWrite(fd, buf, i);
     sceIoClose(fd);
@@ -267,7 +268,7 @@ int autoThread() {
         setOverclock();
         scePowerTick(PSP_POWER_TICK_ALL);
         sceKernelDelayThread(1000000);
-        writeFrequency((u32)frequency);
+        writeId((u32)overclockId);
         sceKernelDelayThread(1000000);
         autoFirst = 0;
       }
