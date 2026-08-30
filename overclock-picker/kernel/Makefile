@@ -7,7 +7,7 @@ TARGET = $(BINOUT)$(TARGET_NAME)
 CC = psp-gcc
 
 PSPSDK = $(shell psp-config --pspsdk-path)
-CFLAGS = -fsingle-precision-constant -Ofast -G0 -Wall -I$(PSPSDK)/include
+CFLAGS = -fsingle-precision-constant -Os -G0 -Wall -I$(PSPSDK)/include
 LDFLAGS = -Wl,-q,-T$(PSPSDK)/lib/linkfile.prx -nostartfiles -Wl,-zmax-page-size=128
 
 release: all

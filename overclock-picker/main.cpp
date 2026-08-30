@@ -7,57 +7,13 @@
 #include <pspgu.h>
 #include "kcall.h"
 #include "main.h"
+#include "octable.h"
 
 #define u32 unsigned int
 
 PSP_MODULE_INFO("overclock-picker", 0, 1, 1);
 PSP_HEAP_SIZE_KB(-1024);
 PSP_MAIN_THREAD_ATTR(PSP_THREAD_ATTR_VFPU | PSP_THREAD_ATTR_USER);
-
-const u32 multipliers[] = {
-  
-  0xa2, // 162 => 333
-  0xa4, // 164 => 337,1...
-  0xa6, // 166 => 341,2...
-  0xa8, // 168 => 345,3...
-  0xaa, // 170 => 349,4...
-  0xab, // 171 => 351,5
-  
-  0xb4, // 180 => 370
-  0xb6, // 182 => 374,1...
-  0xb8, // 184 => 378,2...
-  0xba, // 186 => 382,3...
-  0xbc, // 188 => 386,4...
-  0xbd, // 189 => 388,5
-  
-  0xc6, // 198 => 407
-  0xc8, // 200 => 411,1...
-  0xca, // 202 => 415,2...
-  0xcc, // 204 => 419,3...
-  0xce, // 206 => 423,4...
-  0xcf, // 207 => 425,5
-  
-  0xd8, // 216 => 444
-  0xda, // 218 => 448,1...
-  0xdc, // 220 => 452,2...
-  0xde, // 222 => 456,3...
-  0xe0, // 224 => 460,4...
-  0xe1, // 225 => 462,5
-  
-  0xea, // 234 => 481
-  0xec, // 236 => 485,1...
-  0xee, // 238 => 489,2...
-  0xf0, // 240 => 493,3...
-  0xf2, // 242 => 497,4...
-  0xf3, // 243 => 499,5
- 
-  0xfc,  // 252 => 518
-  0xfe,  // 254 => 522,1...
-  0x100, // 256 => 526,2...
-  0x102, // 258 => 530,3...
-  0x104, // 260 => 534,4...
-  0x105, // 261 => 536,5
-};
 
 const int mulTableSize = sizeof(multipliers) / sizeof(u32);
 
@@ -66,8 +22,6 @@ float frequency = 0.0f;
 #define DELAY_AFTER_CLOCK_CHANGE 300000
 
 #define PLL_DEFAULT_RATIO        1.0f
-#define PLL_DEFAULT_DEN          0x12
-
 #define PLL_BASE_FREQ            37.0f
 #define DEFAULT_FREQUENCY        333
 
@@ -193,8 +147,7 @@ int _setOverclock() {
   resumeCpuIntr(intr);
   sceKernelResumeDispatchThread(state);
   
-  frequency = PLL_BASE_FREQ * (((float)mul) / ((float)0x12)) * ratio;
-  
+  frequency = PLL_BASE_FREQ * (((float)mul) / ((float)PLL_DEFAULT_DEN)) * ratio;
   return 0;
 }
 
@@ -269,7 +222,7 @@ int autoThread() {
         scePowerTick(PSP_POWER_TICK_ALL);
         sceKernelDelayThread(1000000);
         writeId((u32)overclockId);
-        sceKernelDelayThread(1000000);
+        sceKernelDelayThread(2000000);
         autoFirst = 0;
       }
     }

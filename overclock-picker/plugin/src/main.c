@@ -26,35 +26,32 @@ static inline void exitGame() {
   _exitGame();
 }
 */
+#define SAFETY_MARGIN 2
 
 static inline int displaySetFrameBuf(void *fbuf, int width, int format, int sync) {
   
   void *frame = (void*)(0x40000000 | (u32)fbuf);
   if (activated > 0) {
-
     int bytesPerPixel = 4;
     if (format != PSP_DISPLAY_PIXEL_FORMAT_8888) {
       bytesPerPixel = 2;
     }
-
     const int squareSize = 4;
     const int gap = 2;
     const int startX = 8;
     const int startY = 8;
-    const int maxSquares = mulTableSize;
-
+    const int lastTableId = mulTableSize - 1;
+    const int maxSquares = ((overclockMaxId <= lastTableId) ?
+      overclockMaxId : lastTableId) + 1 - SAFETY_MARGIN;
+    
     int i = 0;
     while (i < overclockId) {
-
       int squareX = startX + i * (squareSize + gap);
-
       int r = (i * 255) / (maxSquares - 1);
       int g = 255 - r;
       int b = 0;
-
       u32 color32 = 0xFF000000 | (b << 16) | (g << 8) | r;
       u16 color16 = (u16)(((r >> 3) << 11) | ((g >> 2) << 5) | (b >> 3));
-
       int dy = 0;
       while (dy < squareSize) {
         u8 *row = (u8 *)frame + ((startY + dy) * width * bytesPerPixel);
@@ -69,8 +66,37 @@ static inline int displaySetFrameBuf(void *fbuf, int width, int format, int sync
         }
         dy++;
       }
-
       i++;
+    }
+
+    {
+      const int border = 2;
+      const int rectX0 = startX - border;
+      const int rectX1 = startX + (maxSquares - 1) * (squareSize + gap) - gap + border;
+      const int rectY0 = startY - border;
+      const int rectY1 = startY + squareSize + border;
+
+      u32 borderColor32 = 0xFF00FF00;
+      u16 borderColor16 = 0x07E0;
+
+      int y = rectY0;
+      while (y <= rectY1) {
+        int onHorizontalEdge = (y == rectY0) || (y == rectY1);
+        u8 *row = (u8 *)frame + (y * width * bytesPerPixel);
+        int x = rectX0;
+        while (x <= rectX1) {
+          int onVerticalEdge = (x == rectX0) || (x == rectX1);
+          if (onHorizontalEdge || onVerticalEdge) {
+            if (bytesPerPixel == 4) {
+              *(u32 *)(row + x * 4) = borderColor32;
+            } else {
+              *(u16 *)(row + x * 2) = borderColor16;
+            }
+          }
+          x++;
+        }
+        y++;
+      }
     }
   }
   return _displaySetFrameBuf(fbuf, width, format, sync);
@@ -80,6 +106,11 @@ int switchOverclock() {
   
   //static int released = 1;
   const int lastTableId = mulTableSize - 1;
+  
+  int maxId = (overclockMaxId <= lastTableId) ? overclockMaxId : lastTableId;
+  if (maxId >= SAFETY_MARGIN) {
+    maxId -= SAFETY_MARGIN;
+  }
   
   SceCtrlData ctl;
   sceCtrlPeekBufferPositive(&ctl, 1);
@@ -98,7 +129,7 @@ int switchOverclock() {
     
     //released = 0;
     
-    if (up & (overclockId < lastTableId)) {
+    if (up & (overclockId < maxId)) {
       overclockId += 1;
     } else if(down && (overclockId > 0)) {
       overclockId -= 1;
@@ -157,7 +188,7 @@ int thread(SceSize args, void *argp) {
       if (delay > 0) {
         
         u64 currentTime = sceKernelGetSystemTimeWide();
-        if (currentTime - lastTime >= 100000) {
+        if (currentTime - lastTime >= 200000) {
           delay -= 1;
           lastTime = currentTime;
         }
