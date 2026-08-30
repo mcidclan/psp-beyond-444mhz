@@ -14,7 +14,7 @@
 #define CONCAT(a, b) _CONCAT(a, b)
 #define multipliers CONCAT(multipliers, PLL_DEFAULT_DEN)
 
-// 0x10, max 555
+// 0x10, max 589
 static const u32 multipliers0x10[] = {
   
   144, // 333.000

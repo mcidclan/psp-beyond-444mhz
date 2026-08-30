@@ -16,7 +16,19 @@ PSP_HEAP_SIZE_KB(512);
 int thid, alive = 0;
 int activated = 0;
 
-/*
+static void cancelOverclock() {
+  
+  int i = overclockId;
+  do {
+    
+    overclockId = i;
+    setOverclock();
+    sceKernelDelayThread(1000);
+    i--;
+  } while (i >= 0);
+
+}
+
 static inline int exitGameWithStatus() {
   cancelOverclock();
   return _exitGameWithStatus();
@@ -25,7 +37,7 @@ static inline void exitGame() {
   cancelOverclock();
   _exitGame();
 }
-*/
+
 #define SAFETY_MARGIN 2
 
 static inline int displaySetFrameBuf(void *fbuf, int width, int format, int sync) {
@@ -188,7 +200,7 @@ int thread(SceSize args, void *argp) {
       if (delay > 0) {
         
         u64 currentTime = sceKernelGetSystemTimeWide();
-        if (currentTime - lastTime >= 200000) {
+        if (currentTime - lastTime >= 50000) {
           delay -= 1;
           lastTime = currentTime;
         }
@@ -204,8 +216,8 @@ int thread(SceSize args, void *argp) {
 int module_start(SceSize args, void *argp) {
     
   _displaySetFrameBuf = hook("sceDisplay_Service", "sceDisplay", 0x289D82FE, (void*)displaySetFrameBuf);
-//  _exitGame = hook("sceLoadExec", "LoadExecForUser", 0x05572A5F, (void*)exitGame);
-//  _exitGameWithStatus = hook("sceLoadExec", "LoadExecForUser", 0x2AC9954B, (void*)exitGameWithStatus);
+  _exitGame = hook("sceLoadExec", "LoadExecForUser", 0x05572A5F, (void*)exitGame);
+  _exitGameWithStatus = hook("sceLoadExec", "LoadExecForUser", 0x2AC9954B, (void*)exitGameWithStatus);
 
   thid = sceKernelCreateThread("over-picker-thread", thread, 0x18, 0x8000, PSP_THREAD_ATTR_VFPU, NULL);
   if (thid >= 0) {
