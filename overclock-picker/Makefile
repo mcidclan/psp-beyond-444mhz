@@ -23,7 +23,7 @@ EXTRA_CLEAN = kcall.S
 PSP_EBOOT_SFO = $(BINOUT)PARAM.SFO
 EXTRA_TARGETS = $(BINOUT)EBOOT.PBP
 PSP_EBOOT = $(EXTRA_TARGETS)
-PSP_EBOOT_TITLE = Experimental Overclock Picker
+PSP_EBOOT_TITLE = Overclock Picker
 PSPSDK=$(shell psp-config --pspsdk-path)
 include $(PSPSDK)/lib/build.mak
 

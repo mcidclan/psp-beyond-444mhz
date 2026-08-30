@@ -17,7 +17,10 @@ PSP_MAIN_THREAD_ATTR(PSP_THREAD_ATTR_VFPU | PSP_THREAD_ATTR_USER);
 
 const int mulTableSize = sizeof(multipliers) / sizeof(u32);
 
-float frequency = 0.0f;
+static float lastMaxFrequency = 0.0f;
+static float frequency = 0.0f;
+static int maxId = -1;
+static int overclockId = 0;
 
 #define DELAY_AFTER_CLOCK_CHANGE 300000
 
@@ -120,15 +123,35 @@ inline void adjustDomainRatios() {
   sceKernelResumeDispatchThread(state);
 }
 
-int overclockId = 0;
-int ratioMode = 1;
+int _checkNumerator() {
+  
+  const u32 num = (hw(0xbc1000fc) & 0xff00) >> 8;
+  sync();
+  
+  int i = 0;
+  while (i < mulTableSize) {
+    
+    if (multipliers[i] == num) {
+      overclockId = i;
+      break;
+    }
+    i++;
+  }
+  
+  return 0;
+}
+
+float getFrequency(const u32 mul) {
+  
+  const float ratio = PLL_DEFAULT_RATIO;
+  return PLL_BASE_FREQ * (((float)mul) / ((float)PLL_DEFAULT_DEN)) * ratio;
+}
 
 int _setOverclock() {
   
   adjustDomainRatios();
   
   const int den = PLL_DEFAULT_DEN;
-  const float ratio = PLL_DEFAULT_RATIO;
   
   int intr, state;
   state = sceKernelSuspendDispatchThread();
@@ -147,25 +170,48 @@ int _setOverclock() {
   resumeCpuIntr(intr);
   sceKernelResumeDispatchThread(state);
   
-  frequency = PLL_BASE_FREQ * (((float)mul) / ((float)PLL_DEFAULT_DEN)) * ratio;
+  frequency = getFrequency(mul);
   return 0;
 }
 
-void _cancelOverclock() {
+int cancelOverclock() {
   
-  // todo:
-  // _dump();
+  int i = overclockId;
+  do {
+    
+    overclockId = i;
+    setOverclock();
+    sceKernelDelayThread(OC_MINIMAL_DELAY);
+    i--;
+  } while (i >= 0);
+
+  return 0;
+}
+
+int setMaxOverclock() {
+  
+  int i = 0;
+  do {
+    
+    overclockId = i;
+    setOverclock();
+    sceKernelDelayThread(OC_MINIMAL_DELAY);
+    i++;
+  } while (i <= maxId);
+  
+  return 0;
 }
 
 static inline void initOverclock() {
   
   unlockMemory();
-  
+  checkNumerator();
+
   scePowerSetClockFrequency(DEFAULT_FREQUENCY, DEFAULT_FREQUENCY, DEFAULT_FREQUENCY/2);
-  cancelOverclock();
   sceKernelDelayThread(DELAY_AFTER_CLOCK_CHANGE);
   
   setOverclock();
+  sceKernelDelayThread(OC_MINIMAL_DELAY);
 }
 
 #define BUF_WIDTH   512
@@ -192,7 +238,7 @@ void guInit() {
   sceGuDepthBuffer((void*)DEPTH_BUF, BUF_WIDTH);
   sceGuDisable(GU_DEPTH_TEST);
   sceGuEnable(GU_SCISSOR_TEST);
-  sceGuScissor(0, 68, 480, 272 - 136);
+  sceGuScissor(0, 128, 480, 272 - 68);
   sceGuClearColor(0xff100808);
   sceGuDisplay(GU_TRUE);
   sceGuFinish();
@@ -222,6 +268,10 @@ int autoThread() {
         scePowerTick(PSP_POWER_TICK_ALL);
         sceKernelDelayThread(1000000);
         writeId((u32)overclockId);
+        {
+          const u32 mul = multipliers[overclockId];
+          lastMaxFrequency = getFrequency(mul);
+        }
         sceKernelDelayThread(2000000);
         autoFirst = 0;
       }
@@ -231,10 +281,20 @@ int autoThread() {
   }
 }
 
+#define OC_CTRL_MAX           PSP_CTRL_SQUARE
+#define OC_CTRL_CANCEL        PSP_CTRL_CIRCLE
+#define OC_CTRL_MANUAL_UP     PSP_CTRL_UP
+#define OC_CTRL_MANUAL_DOWN   PSP_CTRL_DOWN
+#define OC_CTRL_MANUAL_WRITE  PSP_CTRL_CROSS
+#define OC_CTRL_AUTO_UP       PSP_CTRL_TRIANGLE
+  
 int thread() {
   
   int up = 1;
+  int cancelUp = 1;
   int autoUp = 1;
+  int maxUp = 1;
+  int writeUp = 1;
   
   SceCtrlData ctl;
   initOverclock();
@@ -243,19 +303,49 @@ int thread() {
     
     sceCtrlPeekBufferPositive(&ctl, 1);
     
-    if ((ctl.Buttons & PSP_CTRL_CIRCLE) && autoUp) {
+    if ((ctl.Buttons & OC_CTRL_AUTO_UP) && autoUp) {
       
       autoMode = (~autoMode) & 1;
       autoUp = 0;
-    } else if(!(ctl.Buttons & PSP_CTRL_CIRCLE)) {
+    } else if(!(ctl.Buttons & OC_CTRL_AUTO_UP)) {
       autoUp = 1;
     }
-    
 
     if(!autoMode) {
       
       autoFirst = 1;
-      if ((ctl.Buttons & PSP_CTRL_TRIANGLE) && up) {
+      
+      if (ctl.Buttons & OC_CTRL_CANCEL && cancelUp) {
+      
+        cancelOverclock();
+        cancelUp = 0;
+      } else if(!(ctl.Buttons & OC_CTRL_CANCEL)) {
+        cancelUp = 1;
+      }
+      
+      if (maxId > 0) {
+        if (ctl.Buttons & OC_CTRL_MAX && maxUp) {
+
+          setMaxOverclock();
+          maxUp = 0;
+        } else if(!(ctl.Buttons & OC_CTRL_MAX)) {
+          maxUp = 1;
+        }
+      }
+      
+      if (ctl.Buttons & OC_CTRL_MANUAL_WRITE && writeUp) {
+        
+        writeId((u32)overclockId);
+        {
+          const u32 mul = multipliers[overclockId];
+          lastMaxFrequency = getFrequency(mul);
+        }
+        writeUp = 0;
+      } else if(!(ctl.Buttons & OC_CTRL_MANUAL_WRITE)) {
+        writeUp = 1;
+      }
+
+      if ((ctl.Buttons & OC_CTRL_MANUAL_UP) && up) {
         
         if (overclockId < lastTableId) {
           overclockId += 1;
@@ -263,7 +353,7 @@ int thread() {
         }
       }
 
-      if ((ctl.Buttons & PSP_CTRL_CROSS) && up) {
+      if ((ctl.Buttons & OC_CTRL_MANUAL_DOWN) && up) {
         
         if (overclockId > 0) {
           overclockId -= 1;
@@ -275,13 +365,32 @@ int thread() {
         setOverclock();
       }
 
-      if (!(ctl.Buttons & PSP_CTRL_TRIANGLE) && !(ctl.Buttons & PSP_CTRL_CROSS)) {
+      if (!(ctl.Buttons & OC_CTRL_MANUAL_UP) && !(ctl.Buttons & OC_CTRL_MANUAL_DOWN)) {
         up = 1;
       }
     }
     
     sceKernelDelayThread(10);
   }
+}
+
+static int readId() {
+  
+  char buf[16] = {0};
+  SceUID fd = sceIoOpen("ms0:/opicker.id", PSP_O_RDONLY, 0777);
+  if (fd >= 0) {
+    
+    sceIoRead(fd, buf, sizeof(buf) - 1);
+    sceIoClose(fd);
+  } else {
+    return -1;
+  }
+  
+  u32 result = 0;
+  for (int i = 0; buf[i] >= '0' && buf[i] <= '9'; i++) {
+    result = result * 10 + (buf[i] - '0');
+  }
+  return result;
 }
 
 int main() {
@@ -293,6 +402,14 @@ int main() {
     pspDebugScreenPrintf("Can't load kcall prx");
     sceKernelExitGame();
     return 0;
+  }
+  
+  maxId = readId();
+  if (maxId >= 2) {
+    
+    maxId -= 2;
+    const u32 mul = multipliers[maxId];
+    lastMaxFrequency = getFrequency(mul);
   }
   
   guInit();
@@ -339,46 +456,71 @@ int main() {
 
     pspDebugScreenSetOffset(offset);
     
-    pspDebugScreenSetXY(42, 32);
-    pspDebugScreenPrintf("Overclock Picker Test v1.1");
-    
     pspDebugScreenSetXY(0, 0);
-    pspDebugScreenPrintf(" FPS: %llu               \n", fps);
-    pspDebugScreenPrintf(" freq: %.0f MHz            ", frequency);
+    pspDebugScreenPrintf(" Overclock Picker v1.2");
+    
+    pspDebugScreenSetXY(0, 3);
+    pspDebugScreenPrintf(
+      " FPS: %4llu, Freq: %3.0f MHz, Last Max Freq: %3.0f MHz   ",
+      fps, frequency, lastMaxFrequency
+    );
     
     //pspDebugScreenPrintf(" v: 0x%08x            \n", autoMode);
     //pspDebugScreenPrintf(" Ctrl: 0x%08x            \n", ctrl);
     //pspDebugScreenPrintf(" Mult: 0x%08x            \n", mult);
   
-    pspDebugScreenSetXY(0, 4);
+    pspDebugScreenSetXY(0, 6);
     if(!autoMode) {
       
-      pspDebugScreenPrintf(" MANUAL mode:                                     \n");
-      pspDebugScreenPrintf(" - Press TRIANGLE or CROSS to change the frequency\n");
-      pspDebugScreenPrintf(" - Press CIRCLE to switch to AUTO mode            \n");
+      pspDebugScreenPrintf(" MANUAL mode:                                  \n");
+      pspDebugScreenPrintf(" - Press TRIANGLE to switch to AUTO mode       \n");
+      pspDebugScreenPrintf(" - Press UP or DOWN to change the frequency    \n");
+      pspDebugScreenPrintf(" - Press CROSS to write current frequency      \n");
+      pspDebugScreenPrintf(" - Press CIRCLE to cancel overclock            \n");
+      if (maxId > 0) {
+        pspDebugScreenPrintf(
+                           " - Press SQUARE to enable max overclock *      \n");
+      }
     }
     else {
-      pspDebugScreenPrintf(" AUTO mode:                                       \n");
-      pspDebugScreenPrintf("                                                  \n");
-      pspDebugScreenPrintf(" - Press CIRCLE to switch to MANUAL mode          \n");
+      pspDebugScreenPrintf(" AUTO mode:                                    \n");
+      pspDebugScreenPrintf(" - Press TRIANGLE to switch to MANUAL mode     \n");
+      pspDebugScreenPrintf("                                               \n");
+      pspDebugScreenPrintf("                                               \n");
+      pspDebugScreenPrintf("                                               \n");
+      if (maxId > 0) {
+        pspDebugScreenPrintf(
+                           "                                               \n");
+      }
     }
     
     {
       Vertex* const vertices = (Vertex*)sceGuGetMemory(sizeof(Vertex) * 2);
+      
+      const int size = 64;
+      const int xmax = 240;
+      const int limit = xmax - (size / 2) - 4;
+      
       move += dir;
-      if(move > 112) {
+      if(move > limit) {
         dir = -1;
-      } else if(move < -112) {
+      } else if(move < -limit) {
         dir = 1;
       }
+      
+      const int xcenter = move + xmax;
+      const int ycenter = 200;
+      
       vertices[0].color = 0;
-      vertices[0].x = 176 + move;
-      vertices[0].y = 72;
+      vertices[0].x = xcenter - size / 2;
+      vertices[0].y = ycenter - size / 2;
       vertices[0].z = 0;
-      vertices[1].color = 0xFF0000FF;
-      vertices[1].x = 128 + 176 + move;
-      vertices[1].y = 128 + 72;
+      
+      vertices[1].color = 0xFF1020FF;
+      vertices[1].x = xcenter + size / 2;
+      vertices[1].y = ycenter + size / 2;
       vertices[1].z = 0;
+      
       sceGuDrawArray(GU_SPRITES, GU_COLOR_8888 | GU_VERTEX_16BIT | GU_TRANSFORM_2D, 2, nullptr, vertices);
     }
     
@@ -392,8 +534,6 @@ int main() {
     fps = res / (now - prev);
     
   } while (!(ctl.Buttons & PSP_CTRL_HOME));
-  
-  cancelOverclock();
   
   pspDebugScreenClear();
   pspDebugScreenSetXY(1, 1);

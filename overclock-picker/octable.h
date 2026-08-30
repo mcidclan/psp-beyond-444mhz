@@ -9,7 +9,9 @@
 //#define PLL_DEFAULT_DEN 0x15
 //#define PLL_DEFAULT_DEN 0x16
 
-#define PLL_DEFAULT_DEN 0x12
+#define OC_MINIMAL_DELAY 100000
+#define PLL_DEFAULT_DEN  0x12
+
 #define _CONCAT(a, b) a##b
 #define CONCAT(a, b) _CONCAT(a, b)
 #define multipliers CONCAT(multipliers, PLL_DEFAULT_DEN)

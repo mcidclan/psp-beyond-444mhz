@@ -23,7 +23,7 @@ static void cancelOverclock() {
     
     overclockId = i;
     setOverclock();
-    sceKernelDelayThread(1000);
+    sceKernelDelayThread(OC_MINIMAL_DELAY);
     i--;
   } while (i >= 0);
 

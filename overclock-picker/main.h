@@ -107,13 +107,25 @@ static inline void _unlockMemory() {
   sync();
 }
 
+#define checkNumerator()                                                       \
+  updateSeg(_checkNumerator);                                                  \
+  kcall((int (*)(void))(0x80000000 | (unsigned int)_checkNumerator));
+
+/*
+#define setMaxOverclock()                                                      \
+  updateSeg(_setMaxOverclock);                                                 \
+  kcall((int (*)(void))(0x80000000 | (unsigned int)_setMaxOverclock));
+*/
+
 #define setOverclock()                                                         \
   updateSeg(_setOverclock);                                                    \
   kcall((int (*)(void))(0x80000000 | (unsigned int)_setOverclock));
 
+/*
 #define cancelOverclock()                                                      \
   updateSeg(_cancelOverclock);                                                 \
   kcall((int (*)(void))(0x80000000 | (unsigned int)_cancelOverclock));
+*/
 
 #define unlockMemory()                                                         \
   updateSeg(_unlockMemory);                                                    \
