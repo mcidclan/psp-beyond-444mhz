@@ -87,6 +87,6 @@ All code submitted to this repository must be compatible with the MIT License. D
 This project and code are provided as-is without warranty. Users assume full responsibility for any implementation or consequences. Use at your own discretion and risk
 
 ## Special Mention
-Thanks to re4thewin, z2442, Acid_Snake, st1x51 and skinny for testing, to koutsie for mentioning overclock possibilities, which sparked my curiosity and led me to investigate and experiment further on the subject, and of course to the pioneers and to crazyc from ps2dev, without whom I would not have had the key information regarding the existence of the registers involved, and ultimately the possibility to soft-overclock itself.
+Thanks to re4thewin, z2442, Acid_Snake, st1x51 and skinny for testing, to febblin and koutsie for having brought back the overclock idea into the community, which sparked my curiosity and led me to investigate and experiment further on the subject, and of course to the pioneers and to crazyc from ps2dev, without whom I would not have had the key information regarding the existence of the registers involved, and ultimately the possibility to soft-overclock itself.
 
 *m-c/d*
