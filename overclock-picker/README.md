@@ -6,6 +6,16 @@ This project is an attempt to write an alternative to the first experimental pro
 
 Before starting make sure that no overclock plugin is enabled. Build the project, copy all generated content of the build folder into the root of your memory stick then run the Overclock Picker app. After a crash or if it does not move forward, reboot your device and relaunch the app. Press TRIANGLE to overclock the device, then exit the app to play your favorite games . You can reuse the app any time to check if overclock is still enabled, to decrease the frequency or to completely cancel the overclock.
 
+### Step by Step
+
+1. Turn off all OC plugins and CFW overclock.
+2. Reset your PSP (recommended the first time).
+3. Launch the ocpicker app (EBOOT) and let it run in auto mode until it crashes.
+4. Reboot your PSP and reopen the app.
+5. Press SQUARE to enable your maximum frequency.
+6. Exit the app and play your games. Before playing, you can go back to the app a third time to check that the OC is still active.
+7. You can go back into the app at any time to adjust your frequency if you wish.
+
 ## Note
 
 You could encounter instability while overclocked. If so reset your device using the combo, then pick another lower value in the app.
