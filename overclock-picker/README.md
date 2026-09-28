@@ -14,6 +14,24 @@ You could encounter instability while overclocked. If so reset your device using
 
 Reset by holding SELECT + START + △ (Triangle) + □ (Square) while powering on the device.
 
+## Contribution Guidelines
+
+### AI-assisted development
+
+AI tools may be used as development aids. However, the following rules apply strictly:
+
+* All commits must be authored by a human contributor (pseudonyms are perfectly acceptable).
+* The commit history must not contain any AI attribution as author or co-author.
+* Contributors must fully review, understand, and validate all submitted code before opening a pull request.
+* Contributors are expected to be able to explain and justify their changes during reviews.
+* The contributor is responsible for ensuring that their code or changes do not break existing functionality, integrations, dependencies, documentation consistency, APIs, build processes, tests, or the overall behavior and technical integrity of the project.
+*In short: AI can assist, but humans must retain full ownership of the work.*
+
+Pull requests that include AI attribution in commits, or that are not clearly understood and validated by the contributor, will be rejected.
+
+### License compatibility
+
+All code submitted to this repository must be compatible with the MIT License. Dependencies or code snippets under more restrictive licenses (e.g. GPL, LGPL, proprietary) are not accepted. Contributors are responsible for verifying that any third-party code they include is under a permissive license granting at least the same level of freedom as MIT.
 
 ## Disclaimer
 
